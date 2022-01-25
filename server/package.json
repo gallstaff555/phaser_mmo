@@ -1,0 +1,23 @@
+{
+  "name": "phaser_mmo",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/gallstaff555/phaser_mmo.git"
+  },
+  "author": "dzs",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/gallstaff555/phaser_mmo/issues"
+  },
+  "homepage": "https://github.com/gallstaff555/phaser_mmo#readme",
+  "dependencies": {
+    "express": "^4.17.2",
+    "phaser": "^3.55.2"
+  }
+}
