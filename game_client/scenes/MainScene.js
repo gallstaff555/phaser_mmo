@@ -1,26 +1,26 @@
 class MainScene extends Phaser.Scene {
     constructor() {
-        super();
+        super("MainScene");
     }
 
     preload() {
-        this.load.image("tiles", "../assets/world/base_tiles.png");
-        this.load.tilemapTiledJSON("tilemap", "../assets/world/map1.json");
-
-        this.setUpSpriteAtlases();
+        //BootScene handles asset loading
     }
 
     create() {
+        //map and tile layers
         map1 = this.make.tilemap({ key: "tilemap", tileWidth: 16, tileHeight: 16 });
         const tileset = map1.addTilesetImage("tiles1", "tiles", 16, 16);
-        var backgroundLayer = map1.createLayer("Background", tileset, 0, 0);
-        const terrainLayer = map1.createLayer("Terrain", tileset, 0, 0);
+        const backgroundLayer = map1.createLayer("Background", tileset, 0, 0);
+        terrainLayer = map1.createLayer("Terrain", tileset, 0, 0);
+        terrainLayer.setCollisionByExclusion(-1, true);
 
         //marker for highlighting tile
         tileMarker = this.add.graphics();
         tileMarker.lineStyle(3, 0xffffff, 1);
         tileMarker.strokeRect(0, 0, map1.tileWidth, map1.tileHeight);
 
+        //new player
         this.player = new Player({
             scene: this,
             key: "druidFemale",
@@ -31,6 +31,10 @@ class MainScene extends Phaser.Scene {
             iconPath: "assets/sprites/icons/druidFemaleIcon.png",
         });
 
+        //add collision detection for player and tile layers
+        this.physics.add.collider(this.player, terrainLayer, () => this.player.body.setVelocity(0));
+
+        //set up
         this.setUpDruidAnimations();
         this.setUpControlsAndCamera(backgroundLayer);
 
@@ -63,39 +67,6 @@ class MainScene extends Phaser.Scene {
                 this.player.attributes.isMoving = true;
             },
             this
-        );
-    }
-
-    updateTileMarker() {
-        let worldPoint = this.input.activePointer.positionToCamera(this.cameras.main);
-
-        let pointerTileX = map1.worldToTileX(worldPoint.x);
-        let pointerTileY = map1.worldToTileY(worldPoint.y);
-
-        tileMarker.x = map1.tileToWorldX(pointerTileX);
-        tileMarker.y = map1.tileToWorldY(pointerTileY);
-    }
-
-    setUpSpriteAtlases() {
-        this.load.atlas(
-            "druidFemale",
-            `../assets/sprites/druid/druidFemaleSpriteSheet.png`,
-            `../assets/sprites/druid/druidFemaleSpriteSheet.json`
-        );
-
-        const sprites = ["druidFemale", "druidMale"];
-        for (let sprite of sprites) {
-            this.load.atlas(
-                `${sprite}`, //e.g. class: druid_druid
-                `../assets/sprites/druid/${sprite}SpriteSheet.png`,
-                `../assets/sprites/druid/${sprite}SpriteSheet.json`
-            );
-        }
-
-        this.load.atlas(
-            "inferno_male",
-            `../assets/sprites/Inferno/InfernoSpriteSheetMale.png`,
-            `../assets/sprites/Inferno/InfernoSpriteSheetMale.json`
         );
     }
 
@@ -155,6 +126,16 @@ class MainScene extends Phaser.Scene {
             this.player.play("idle", true);
         }
     }
+
+    updateTileMarker() {
+        let worldPoint = this.input.activePointer.positionToCamera(this.cameras.main);
+
+        let pointerTileX = map1.worldToTileX(worldPoint.x);
+        let pointerTileY = map1.worldToTileY(worldPoint.y);
+
+        tileMarker.x = map1.tileToWorldX(pointerTileX);
+        tileMarker.y = map1.tileToWorldY(pointerTileY);
+    }
 }
 
 /* graveyard
@@ -208,4 +189,6 @@ let  controlConfig = {
             }
         }
     }
+            // this.load.image("tiles", "../assets/world/base_tiles.png");
+        // this.load.tilemapTiledJSON("tilemap", "../assets/world/map1.json");
             } */
