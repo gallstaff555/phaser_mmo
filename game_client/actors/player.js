@@ -15,4 +15,8 @@ class Player extends Phaser.Physics.Arcade.Sprite {
             gender: config.gender,
         };
     }
+
+    getClass() {
+        return this.attributes.class;
+    }
 }

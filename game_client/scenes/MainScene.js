@@ -43,11 +43,27 @@ class MainScene extends Phaser.Scene {
             y: 40,
             path: this.player.attributes.portraitIconPath,
         });
+
+        /*socket.on("chat message", () => {
+            socket.emit("hello!", `I am ${data.name}`);
+        });
+
+        socket.emit("chat message", {
+            message: "hello there",
+            name: this.player.class,
+        });*/
     }
 
     update(time, delta) {
         this.updatePlayerMovement();
         this.updateTileMarker();
+    }
+
+    testtest() {
+        socket.emit("chat message", {
+            message: "hello there",
+            name: this.player.class,
+        });
     }
 
     setUpControlsAndCamera(layer) {
@@ -65,6 +81,8 @@ class MainScene extends Phaser.Scene {
 
                 this.physics.moveToObject(this.player, target, this.player.attributes.moveSpeed);
                 this.player.attributes.isMoving = true;
+
+                socket.emit("message", `${this.player.attributes.class} is going to ${target.x}, ${target.y} `);
             },
             this
         );

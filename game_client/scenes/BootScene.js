@@ -10,10 +10,28 @@ class BootScene extends Phaser.Scene {
     }
 
     create() {
-        setTimeout(() => {
+        socket.on("connect", () => {
+            socket.send("hello!!!");
+        });
+
+        socket.on("message", (message) => {
+            console.log(message);
+        });
+
+        socket.on("currentPlayers", function (players) {
+            console.log("hello, you are: ", players);
+        });
+
+        socket.on("newPlayer", function (playerInfo) {
+            console.log("Another player has joined.");
+        });
+
+        this.scene.launch("MainScene");
+        this.scene.stop();
+        /*setTimeout(() => {
             this.scene.launch("MainScene");
             this.scene.stop();
-        }, 1000);
+        }, 1000); */
     }
 
     setUpSpriteAtlases() {
