@@ -10,21 +10,13 @@ class BootScene extends Phaser.Scene {
     }
 
     create() {
-        socket.on("connect", () => {
-            socket.send("hello!!!");
-        });
+        // socket.on("connect", () => {
+        //     socket.send("hello!!!");
+        // });
 
-        socket.on("message", (message) => {
-            console.log(message);
-        });
-
-        socket.on("currentPlayers", function (players) {
-            console.log("hello, you are: ", players);
-        });
-
-        socket.on("newPlayer", function (playerInfo) {
-            console.log("Another player has joined.");
-        });
+        // socket.on("message", (message) => {
+        //     console.log(message);
+        // });
 
         this.scene.launch("MainScene");
         this.scene.stop();
@@ -33,6 +25,22 @@ class BootScene extends Phaser.Scene {
             this.scene.stop();
         }, 1000); */
     }
+
+    // addOtherPlayers(self, playerInfo) {
+    //     const otherPlayer = new Player({
+    //         scene: this,
+    //         name: Math.random(),
+    //         key: "druidFemale",
+    //         x: 100,
+    //         y: 200,
+    //         class: "druid",
+    //         gender: "female",
+    //         iconPath: "assets/sprites/icons/druidFemaleIcon.png",
+    //     });
+
+    //     otherPlayer.playerID = playerInfo.playerID;
+    //     self.otherPlayers.add(otherPlayer);
+    // }
 
     setUpSpriteAtlases() {
         this.load.atlas(

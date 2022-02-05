@@ -20,6 +20,7 @@ var map1;
 var tileMarker;
 var terrainLayer;
 var socket = io();
+var playerList = {};
 var target = new Phaser.Math.Vector2();
 var distanceText;
 var game = new Phaser.Game(config);

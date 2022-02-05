@@ -8,6 +8,8 @@ class Player extends Phaser.Physics.Arcade.Sprite {
         this.setScale(1);
 
         this.attributes = {
+            name: config.name,
+            playerID: config.playerID,
             moveSpeed: 50,
             isMoving: false,
             portraitIconPath: config.iconPath,

@@ -20,9 +20,13 @@ class MainScene extends Phaser.Scene {
         tileMarker.lineStyle(3, 0xffffff, 1);
         tileMarker.strokeRect(0, 0, map1.tileWidth, map1.tileHeight);
 
+        //this.otherPlayers = this.physics.add.group();
+
         //new player
         this.player = new Player({
             scene: this,
+            name: Math.random(),
+            playerID: socket.id,
             key: "druidFemale",
             x: 100,
             y: 200,
@@ -34,6 +38,52 @@ class MainScene extends Phaser.Scene {
         //add collision detection for player and tile layers
         this.physics.add.collider(this.player, terrainLayer, () => this.player.body.setVelocity(0));
 
+        //client side socket set up
+        console.log(`my id is ${socket.id}`);
+
+        //tell other players that I just joined (but I won't see a message)
+        socket.on("newPlayerHasJoinedMessage", function (playerInfo) {
+            console.log(`Another player has joined: ${playerInfo}`);
+        });
+
+        //add me to the list of players on the server
+        socket.emit("addPlayerToServer", this.player);
+
+        //Print a list of all the players currently on the server
+        socket.on("getPlayersFromServer", (otherPlayers) => {
+            console.log(`The players are the server are: ${JSON.stringify(Object.keys(otherPlayers))}`);
+        });
+
+        //add other players to this game world
+        socket.on("addPlayersToGameWorld", (players) => {
+            Object.keys(players).forEach((id) => {
+                if (players[id].playerID === socket.id) {
+                    console.log("you are the current player!");
+                } else if (!(id in playerList)) {
+                    console.log("adding a player to player list.");
+                    //an existing player needs to be added
+                    console.log(`We need to add this player to the game ${id}`);
+                    //addOtherPlayers(self, players[id]);
+                    let otherPlayer = new Player({
+                        scene: this,
+                        name: Math.random(),
+                        playerID: id,
+                        key: "druidFemale",
+                        x: 100,
+                        y: 200,
+                        class: "druid",
+                        gender: "female",
+                        iconPath: "assets/sprites/icons/druidFemaleIcon.png",
+                    });
+
+                    playerList[id] = {
+                        playerID: id,
+                        character: otherPlayer,
+                    };
+                }
+            });
+        });
+
         //set up
         this.setUpDruidAnimations();
         this.setUpControlsAndCamera(backgroundLayer);
@@ -43,27 +93,11 @@ class MainScene extends Phaser.Scene {
             y: 40,
             path: this.player.attributes.portraitIconPath,
         });
-
-        /*socket.on("chat message", () => {
-            socket.emit("hello!", `I am ${data.name}`);
-        });
-
-        socket.emit("chat message", {
-            message: "hello there",
-            name: this.player.class,
-        });*/
     }
 
     update(time, delta) {
         this.updatePlayerMovement();
         this.updateTileMarker();
-    }
-
-    testtest() {
-        socket.emit("chat message", {
-            message: "hello there",
-            name: this.player.class,
-        });
     }
 
     setUpControlsAndCamera(layer) {
@@ -82,6 +116,7 @@ class MainScene extends Phaser.Scene {
                 this.physics.moveToObject(this.player, target, this.player.attributes.moveSpeed);
                 this.player.attributes.isMoving = true;
 
+                socket.emit("checkForNewPlayers");
                 socket.emit("message", `${this.player.attributes.class} is going to ${target.x}, ${target.y} `);
             },
             this
@@ -117,7 +152,7 @@ class MainScene extends Phaser.Scene {
                     start: 0,
                     end: 3,
                 }),
-                frameRate: 1,
+                frameRate: 2,
                 repeat: -1,
             });
         }
@@ -143,6 +178,10 @@ class MainScene extends Phaser.Scene {
         } else {
             this.player.play("idle", true);
         }
+
+        Object.keys(playerList).forEach((player) => {
+            playerList[player].character.play("idle", true);
+        });
     }
 
     updateTileMarker() {

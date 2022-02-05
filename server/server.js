@@ -17,21 +17,32 @@ var players = {};
 io.on("connection", (socket) => {
     console.log(`a player connected.`);
 
-    players[socket.id] = {
-        playerID: socket.id,
-    };
+    socket.emit("getPlayersFromServer", players);
 
-    socket.emit("currentPlayers", players);
-    socket.broadcast.emit("newPlayer", players[socket.id]);
+    socket.on("addPlayerToServer", (character) => {
+        players[socket.id] = {
+            playerID: socket.id,
+            character: character,
+        };
+        //console.log(`Added ${JSON.stringify(character)} to the server.`);
+        socket.broadcast.emit("newPlayerHasJoinedMessage", socket.id);
+        socket.emit("getPlayersFromServer", players);
+        socket.emit("addPlayersToGameWorld", players);
+    });
 
     socket.on("message", (message) => {
-        //io.emit("message", message);
-        socket.broadcast.emit("i am broadcasting to everyone but sender");
-        console.log(message);
+        console.log(message + "!");
+    });
+
+    //need to add receiver for this in MainScene on "update"
+    socket.on("checkForNewPlayers", () => {
+        socket.emit("addPlayersToGameWorld", players);
     });
 
     socket.on("disconnect", () => {
         console.log("a player disconnected.");
+        delete players[socket.id];
+        //io.emit("disconnect", socket.id);
     });
 });
 
