@@ -41,20 +41,33 @@ io.on("connection", (socket) => {
     });
 
     //
-    socket.on("playerMoving", (newLocation) => {
+    socket.on("playerMoving", (player) => {
         //assign new location for character with this socket.id
-        Object.keys(players).forEach((player) => {
-            if (socket.id === player) {
-                console.log(`${player} new location: ${JSON.stringify(newLocation)}`);
-                players[socket.id].character.x = newLocation.x;
-                players[socket.id].character.y = newLocation.y;
-                //console.log(`${JSON.stringify(players[socket.id].character)}`);
-            }
-        });
+        // Object.keys(players).forEach((player) => {
+        //     if (socket.id === player) {
+        //         console.log(`${player} new location: ${JSON.stringify(newLocation)}`);
+        //         players[socket.id].character.x = newLocation.x;
+        //         players[socket.id].character.y = newLocation.y;
+        //         //console.log(`${JSON.stringify(players[socket.id].character)}`);
+        //     }
+        // });
+        if (
+            players[player.id].character.x !== player.character.x ||
+            players[player.id].character.y !== player.character.y
+        ) {
+            //console.log("code reached");
+            players[player.id].character.x = player.character.x;
+            players[player.id].character.y = player.character.y;
+            socket.broadcast.emit("playerHasMoved", {
+                id: player.id,
+                x: player.character.x,
+                y: player.character.y,
+            });
+        }
     });
 
     //might need to do player.targetLocation.x instead of player.x
-    socket.on("checkForSpriteLocationChange", (player) => {
+    /*socket.on("checkForSpriteLocationChange", (player) => {
         if (
             players[player.id].character.x !== player.location.x ||
             players[player.id].character.y !== player.location.y
@@ -66,7 +79,7 @@ io.on("connection", (socket) => {
                 y: players[player.id].character.y,
             });
         }
-    });
+    }); */
 
     //remove player from player list after their socket disconnects
     socket.on("disconnect", () => {
