@@ -23,22 +23,52 @@ io.on("connection", (socket) => {
         players[socket.id] = {
             playerID: socket.id,
             character: character,
+            //location should be character.location.x
         };
-        //console.log(`Added ${JSON.stringify(character)} to the server.`);
         socket.broadcast.emit("newPlayerHasJoinedMessage", socket.id);
         socket.emit("getPlayersFromServer", players);
         socket.emit("addPlayersToGameWorld", players);
     });
 
-    socket.on("message", (message) => {
-        console.log(message + "!");
+    //print a message to server console
+    socket.on("logMessageOnServer", (message) => {
+        console.log(message);
     });
 
-    //need to add receiver for this in MainScene on "update"
+    //add new player to list of players
     socket.on("checkForNewPlayers", () => {
         socket.emit("addPlayersToGameWorld", players);
     });
 
+    //
+    socket.on("playerMoving", (newLocation) => {
+        //assign new location for character with this socket.id
+        Object.keys(players).forEach((player) => {
+            if (socket.id === player) {
+                console.log(`${player} new location: ${JSON.stringify(newLocation)}`);
+                players[socket.id].character.x = newLocation.x;
+                players[socket.id].character.y = newLocation.y;
+                //console.log(`${JSON.stringify(players[socket.id].character)}`);
+            }
+        });
+    });
+
+    //might need to do player.targetLocation.x instead of player.x
+    socket.on("checkForSpriteLocationChange", (player) => {
+        if (
+            players[player.id].character.x !== player.location.x ||
+            players[player.id].character.y !== player.location.y
+        ) {
+            //need to update the client that player location has changed
+            socket.emit("updateSpriteLocation", {
+                id: player.id,
+                x: players[player.id].character.x,
+                y: players[player.id].character.y,
+            });
+        }
+    });
+
+    //remove player from player list after their socket disconnects
     socket.on("disconnect", () => {
         console.log("a player disconnected.");
         delete players[socket.id];
