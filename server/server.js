@@ -15,15 +15,16 @@ var players = {};
 
 //socket.io connection:
 io.on("connection", (socket) => {
-    console.log(`a player connected.`);
+    console.log(`${socket.id} has connected`);
 
     socket.emit("getPlayersFromServer", players);
 
     socket.on("addPlayerToServer", (character) => {
         players[socket.id] = {
-            playerID: socket.id,
+            playerID: socket.id, //this might be useful as alternative ID should socket ID change
             character: character,
-            //location should be character.location.x
+            // playerID: character.id, //this might be useful as alternative ID should socket ID change
+            // character: character.player,
         };
         socket.broadcast.emit("newPlayerHasJoinedMessage", socket.id);
         socket.emit("getPlayersFromServer", players);
@@ -40,13 +41,24 @@ io.on("connection", (socket) => {
         socket.emit("addPlayersToGameWorld", players);
     });
 
-    //
     socket.on("playerMoving", (player) => {
+        if (!players.hasOwnProperty(player.id)) {
+            //console.log(`${player.id} not found on server yet`);
+            socket.emit("addPlayersToGameWorld", players);
+            socket.emit("removeOldPlayers", players);
+
+            players[player.id] = {
+                playerID: player.id,
+                character: player.character,
+            };
+            console.log(`${JSON.stringify(Object.keys(players))}`);
+            //socket.emit("getPlayersFromServer", players);
+        }
+
         if (
             players[player.id].character.x !== player.character.x ||
             players[player.id].character.y !== player.character.y
         ) {
-            //console.log("code reached");
             players[player.id].character.x = player.character.x;
             players[player.id].character.y = player.character.y;
             socket.broadcast.emit("playerHasMoved", {
@@ -59,7 +71,7 @@ io.on("connection", (socket) => {
 
     //remove player from player list after their socket disconnects
     socket.on("disconnect", () => {
-        console.log("a player disconnected.");
+        console.log(`${socket.id} has disconnected.`);
         io.emit("aPlayerDisconnected", socket.id);
         delete players[socket.id];
         //io.emit("disconnect", socket.id);
