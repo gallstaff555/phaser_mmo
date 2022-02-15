@@ -9,6 +9,8 @@
   "author": "dzs",
   "license": "ISC",
   "dependencies": {
+    "@azerion/phaser-input": "^2.0.5",
+    "phaser3-rex-plugins": "^1.1.66",
     "socket.io": "^4.4.1"
   }
 }

@@ -20,12 +20,12 @@ class MainScene extends Phaser.Scene {
         tileMarker.lineStyle(3, 0xffffff, 1);
         tileMarker.strokeRect(0, 0, map1.tileWidth, map1.tileHeight);
 
-        //this.otherPlayers = this.physics.add.group();
+        //this.idCopy = JSON.stringify(socket.id);
+        this.idCopy = Object.assign(socket.id, {});
 
         //new player
         this.player = new Player({
             scene: this,
-            name: Math.random(),
             playerID: socket.id,
             key: "druidFemale",
             x: 100,
@@ -39,7 +39,11 @@ class MainScene extends Phaser.Scene {
         this.physics.add.collider(this.player, terrainLayer, () => this.player.body.setVelocity(0));
 
         //client side socket set up
-        console.log(`my id is ${socket.id}`);
+        console.log(`my id is ${socket.id}; value of idCopy is ${this.idCopy}`);
+
+        // socket.on("disconnect", () => {
+        //     socket = io();
+        // });
 
         //tell other players that I just joined (but I won't see a message)
         socket.on("newPlayerHasJoinedMessage", function (playerInfo) {
@@ -47,23 +51,21 @@ class MainScene extends Phaser.Scene {
         });
 
         //add me to the list of players on the server
-        socket.emit("addPlayerToServer", this.player);
+        socket.emit("addPlayerToServer", this.player /*{ player: this.player, id: this.idCopy }*/);
 
         //Print a list of all the players currently on the server
+        //add their positions in this scene
         socket.on("getPlayersFromServer", (otherPlayers) => {
-            console.log(`The players are the server are: ${JSON.stringify(Object.keys(otherPlayers))}`);
+            console.log(`The players already on the server are: ${JSON.stringify(Object.keys(otherPlayers))}`);
         });
 
         //add other players to this game world
         socket.on("addPlayersToGameWorld", (players) => {
             Object.keys(players).forEach((id) => {
-                if (players[id].playerID === socket.id) {
-                    console.log("you are the current player!");
-                } else if (!(id in playerList)) {
-                    console.log("adding a player to player list.");
+                //if another player found
+                if (!(id in playerList) && id != socket.id) {
                     //an existing player needs to be added
-                    console.log(`We need to add this player to the game ${id}`);
-                    //addOtherPlayers(self, players[id]);
+                    console.log(`This player is online: ${id}`);
                     let otherPlayer = new Player({
                         scene: this,
                         name: Math.random(),
@@ -82,6 +84,41 @@ class MainScene extends Phaser.Scene {
                     };
                 }
             });
+
+            //update existing player position in game world so that new player has up to date view
+            Object.keys(players).forEach((id) => {
+                Object.keys(playerList).forEach((p) => {
+                    if (p !== socket.id && p === players[p].playerID) {
+                        playerList[p].character.x = players[p].character.x;
+                        playerList[p].character.y = players[p].character.y;
+                    }
+                });
+            });
+        });
+
+        socket.on("playerHasMoved", (moved) => {
+            Object.keys(playerList).forEach((player) => {
+                if (player === moved.id) {
+                    playerList[moved.id].character.x = moved.x;
+                    playerList[moved.id].character.y = moved.y;
+                }
+                console.log(`playerList length: ${Object.keys(playerList).length}`);
+            });
+        });
+
+        //remove player from playerList and destroy their associated sprite from the game
+        socket.on("aPlayerDisconnected", (player) => {
+            playerList[player].character.destroy();
+            delete playerList[player];
+        });
+
+        socket.on("removeOldPlayers", (players) => {
+            Object.keys(playerList).forEach((p) => {
+                if (!p in players) {
+                    playerList[p].character.destroy();
+                    delete playerList[p];
+                }
+            });
         });
 
         //set up
@@ -98,6 +135,23 @@ class MainScene extends Phaser.Scene {
     update(time, delta) {
         this.updatePlayerMovement();
         this.updateTileMarker();
+
+        socket.emit("checkForNewPlayers");
+
+        // if (typeof socket.id === undefined) {
+        //     socket.emit("addPlayerToServer", this.player);
+        // }
+
+        if (this.player !== undefined && socket.id !== undefined) {
+            socket.emit("playerMoving", {
+                id: socket.id,
+                x: this.player.x,
+                y: this.player.y,
+                character: this.player,
+            });
+        } else {
+            console.log(`socket.id may have changed to: ${socket.id}; copy id: ${this.idCopy}`);
+        }
     }
 
     setUpControlsAndCamera(layer) {
@@ -109,15 +163,11 @@ class MainScene extends Phaser.Scene {
             function (pointer) {
                 let tile = layer.getTileAtWorldXY(pointer.x, pointer.y);
 
-                //player moves to center of tile
                 target.x = tile.getCenterX();
                 target.y = tile.getCenterY();
 
+                //player moves to center of tile where player clicked
                 this.physics.moveToObject(this.player, target, this.player.attributes.moveSpeed);
-                this.player.attributes.isMoving = true;
-
-                socket.emit("checkForNewPlayers");
-                socket.emit("message", `${this.player.attributes.class} is going to ${target.x}, ${target.y} `);
             },
             this
         );
@@ -246,6 +296,24 @@ let  controlConfig = {
             }
         }
     }
-            // this.load.image("tiles", "../assets/world/base_tiles.png");
-        // this.load.tilemapTiledJSON("tilemap", "../assets/world/map1.json");
-            } */
+    
+        // socket.on("updateSpriteLocation", (player) => {
+        //     let playerToMove = playerList[player.id].character;
+        //     let tempTarget = new Phaser.Math.Vector2();
+        //     tempTarget.x = player.x;
+        //     tempTarget.y = player.y;
+        //     this.physics.moveToObject(playerToMove, tempTarget, 50);
+        // });
+
+                //update position for all players other than self
+        /*Object.keys(playerList).forEach((player) => {
+            if (player !== this.player.socketID) {
+                socket.emit("checkForSpriteLocationChange", {
+                    id: player,
+                    location: playerList[player].character.targetLocation,
+                });
+            }
+        });*/
+
+// this.load.image("tiles", "../assets/world/base_tiles.png");
+// this.load.tilemapTiledJSON("tilemap", "../assets/world/map1.json");

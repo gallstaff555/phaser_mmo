@@ -1,8 +1,8 @@
-let config = {
+const config = {
     type: Phaser.AUTO,
     width: 800,
     height: 800,
-    scene: [BootScene, MainScene],
+    scene: [CharacterCreation, BootScene, MainScene],
     pixelArt: true,
     physics: {
         default: "arcade",
@@ -11,6 +11,13 @@ let config = {
             fps: 60,
             gravity: { y: 0 },
         },
+    },
+    scale: {
+        //mode: Phaser.Scale.FIT,
+        autoCenter: Phaser.Scale.CENTER_BOTH,
+    },
+    dom: {
+        createContainer: true,
     },
 };
 

@@ -16,6 +16,13 @@ class Player extends Phaser.Physics.Arcade.Sprite {
             class: config.class,
             gender: config.gender,
         };
+
+        this.socketID = config.playerID;
+
+        this.targetLocation = {
+            x: config.x,
+            y: config.y,
+        };
     }
 
     getClass() {
