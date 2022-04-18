@@ -2,7 +2,7 @@ const config = {
     type: Phaser.AUTO,
     width: 800,
     height: 800,
-    scene: [BootScene, MainScene],
+    scene: [CharacterCreation, BootScene, MainScene],
     pixelArt: true,
     physics: {
         default: "arcade",
