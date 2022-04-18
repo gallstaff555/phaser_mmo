@@ -10,6 +10,7 @@ class BootScene extends Phaser.Scene {
     }
 
     create() {
+        console.log(characterName);
         this.scene.launch("MainScene");
         this.scene.stop();
         /*setTimeout(() => {
