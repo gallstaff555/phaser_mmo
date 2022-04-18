@@ -13,7 +13,6 @@ const config = {
         },
     },
     scale: {
-        //mode: Phaser.Scale.FIT,
         autoCenter: Phaser.Scale.CENTER_BOTH,
     },
     dom: {
@@ -30,4 +29,5 @@ var socket = io();
 var playerList = {};
 var target = new Phaser.Math.Vector2();
 var distanceText;
+var characterName = "";
 var game = new Phaser.Game(config);
