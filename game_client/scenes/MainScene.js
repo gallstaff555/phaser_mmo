@@ -20,13 +20,12 @@ class MainScene extends Phaser.Scene {
         tileMarker.lineStyle(3, 0xffffff, 1);
         tileMarker.strokeRect(0, 0, map1.tileWidth, map1.tileHeight);
 
-        //this.idCopy = JSON.stringify(socket.id);
-        this.idCopy = Object.assign(socket.id, {});
 
         //new player
         this.player = new Player({
             scene: this,
-            playerID: socket.id,
+            playerSocketID: socket.id,
+            playerName: characterName,
             key: "druidFemale",
             x: 100,
             y: 200,
@@ -39,19 +38,15 @@ class MainScene extends Phaser.Scene {
         this.physics.add.collider(this.player, terrainLayer, () => this.player.body.setVelocity(0));
 
         //client side socket set up
-        console.log(`my id is ${socket.id}; value of idCopy is ${this.idCopy}`);
-
-        // socket.on("disconnect", () => {
-        //     socket = io();
-        // });
+        console.log(`my id is ${socket.id}`);
 
         //tell other players that I just joined (but I won't see a message)
-        socket.on("newPlayerHasJoinedMessage", function (playerInfo) {
-            console.log(`Another player has joined: ${playerInfo}`);
+        socket.on("newPlayerHasJoinedMessage", (name) => {
+            console.log(`Another player has joined: ${name}`);
         });
 
         //add me to the list of players on the server
-        socket.emit("addPlayerToServer", this.player /*{ player: this.player, id: this.idCopy }*/);
+        socket.emit("addPlayerToServer", {player: this.player, name: characterName});
 
         //Print a list of all the players currently on the server
         //add their positions in this scene
@@ -61,15 +56,14 @@ class MainScene extends Phaser.Scene {
 
         //add other players to this game world
         socket.on("addPlayersToGameWorld", (players) => {
-            Object.keys(players).forEach((id) => {
+            Object.keys(players).forEach((name) => {
                 //if another player found
-                if (!(id in playerList) && id != socket.id) {
-                    //an existing player needs to be added
-                    console.log(`This player is online: ${id}`);
+                if (!(name in playerList) && name != characterName) {
+                    
                     let otherPlayer = new Player({
                         scene: this,
                         name: Math.random(),
-                        playerID: id,
+                        playerName: name,
                         key: "druidFemale",
                         x: 100,
                         y: 200,
@@ -78,17 +72,17 @@ class MainScene extends Phaser.Scene {
                         iconPath: "assets/sprites/icons/druidFemaleIcon.png",
                     });
 
-                    playerList[id] = {
-                        playerID: id,
+                    playerList[name] = {
+                        playerSocketID: name.playerSocketID,
                         character: otherPlayer,
                     };
                 }
             });
 
             //update existing player position in game world so that new player has up to date view
-            Object.keys(players).forEach((id) => {
+            Object.keys(players).forEach((name) => {
                 Object.keys(playerList).forEach((p) => {
-                    if (p !== socket.id && p === players[p].playerID) {
+                    if (p !== characterName) {
                         playerList[p].character.x = players[p].character.x;
                         playerList[p].character.y = players[p].character.y;
                     }
@@ -97,10 +91,11 @@ class MainScene extends Phaser.Scene {
         });
 
         socket.on("playerHasMoved", (moved) => {
+            console.log('moved test');
             Object.keys(playerList).forEach((player) => {
-                if (player === moved.id) {
-                    playerList[moved.id].character.x = moved.x;
-                    playerList[moved.id].character.y = moved.y;
+                if (player === moved.name) {
+                    playerList[moved.name].character.x = moved.x;
+                    playerList[moved.name].character.y = moved.y;
                 }
                 console.log(`playerList length: ${Object.keys(playerList).length}`);
             });
@@ -108,6 +103,7 @@ class MainScene extends Phaser.Scene {
 
         //remove player from playerList and destroy their associated sprite from the game
         socket.on("aPlayerDisconnected", (player) => {
+            console.log(`${player} has gone offline.`);
             playerList[player].character.destroy();
             delete playerList[player];
         });
@@ -148,9 +144,10 @@ class MainScene extends Phaser.Scene {
                 x: this.player.x,
                 y: this.player.y,
                 character: this.player,
+                name: characterName,
             });
         } else {
-            console.log(`socket.id may have changed to: ${socket.id}; copy id: ${this.idCopy}`);
+            console.log(`something went wrong with a disconnecting player or the server disconnected.`);
         }
     }
 

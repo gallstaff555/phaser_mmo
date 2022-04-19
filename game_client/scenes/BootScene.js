@@ -10,7 +10,7 @@ class BootScene extends Phaser.Scene {
     }
 
     create() {
-        console.log(characterName);
+        console.log(`Character with name: ${characterName} has joined.`);
         this.scene.launch("MainScene");
         this.scene.stop();
         /*setTimeout(() => {
