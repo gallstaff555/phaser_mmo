@@ -6,10 +6,10 @@ const io = require("socket.io")(server);
 
 const PORT = 8080;
 
-app.use(express.static(__dirname + "/../game_client"));
+app.use(express.static(__dirname + "/game_client"));
 
 app.get("/", function (req, res) {
-    res.sendFile(__dirname + "/../game_client/index.html");
+    res.sendFile(__dirname + "/game_client/index.html");
 });
 
 var players = {};
@@ -24,7 +24,6 @@ players is a list of players with their name and socketID
 */
 
 io.on("connection", (socket) => {
-
     //device way to seemlessly add players whose clients were connected before server was online
     //socket.emit("checkForClientsOnlineBeforeServer", ())
 
@@ -53,7 +52,7 @@ io.on("connection", (socket) => {
                 playerSocketID: player.id,
                 character: player.character,
             };
-        }      
+        }
 
         if (
             players[player.name].character.x !== player.character.x ||
@@ -67,23 +66,20 @@ io.on("connection", (socket) => {
                 x: player.character.x,
                 y: player.character.y,
             });
-        } 
+        }
     });
 
-
     socket.on("disconnect", () => {
-
-       //delete the player from players list corresponding to the socket.id that just disconnected 
-        Object.keys(players).forEach(name => {
+        //delete the player from players list corresponding to the socket.id that just disconnected
+        Object.keys(players).forEach((name) => {
             if (players[name].playerSocketID == socket.id) {
                 io.emit("aPlayerDisconnected", name);
                 delete players[name];
                 console.log(`${name} with id ${socket.id} has left the server.`);
             }
-          });
+        });
     });
 });
-
 
 server.listen(PORT, () => {
     console.log(`Server listening on port: http://localhost:${PORT}`);
